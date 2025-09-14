@@ -437,5 +437,3 @@ Verificar que o VS foi removido:
 kubectl get virtualservice -n app | findstr backend-fault-90pct || echo 'removido'
 ```
 Após remover, as requisições voltam a retornar 200 (salvo erros reais da aplicação).
-
-> Observação: mantenha apenas **um** VirtualService principal para o host `backend.app.svc.cluster.local` quando estiver demonstrando fault injection. Evite conflitos com outros arquivos de teste.

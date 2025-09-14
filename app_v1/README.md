@@ -219,6 +219,3 @@ docker compose --profile k6 run --rm k6 run /scripts/stress_ramp.js
 - Thresholds = SLOs automatizados.
 - Diferencie smoke, load, stress, spike.
 - Correlacione com métricas de backend e DB.
-
----
-Saída com thresholds quebrados retorna exit code ≠ 0 (ideal para CI/CD).
