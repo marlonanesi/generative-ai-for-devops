@@ -1,0 +1,6 @@
+# Helper (comentários + NOT a Kubernetes manifest). Mantido para referência rápida de comandos de acesso.
+# Para abrir o Kiali:
+#   istioctl dashboard kiali --browser=false
+# Alternativa manual:
+#   kubectl -n istio-system port-forward svc/kiali 20001:20001
+# URL: http://localhost:20001

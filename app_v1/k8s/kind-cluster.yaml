@@ -1,0 +1,25 @@
+# kind cluster config mapping selected nodePorts for convenience (optional)
+# You can also skip this and rely on kubectl port-forward commands in README.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30000  # backend
+        hostPort: 8000
+        protocol: TCP
+      - containerPort: 30001  # frontend
+        hostPort: 8501
+        protocol: TCP
+      - containerPort: 30002  # prometheus
+        hostPort: 9090
+        protocol: TCP
+      - containerPort: 30003  # grafana
+        hostPort: 3000
+        protocol: TCP
+      - containerPort: 30004  # opensearch
+        hostPort: 9200
+        protocol: TCP
+      - containerPort: 30005  # opensearch dashboards
+        hostPort: 5601
+        protocol: TCP

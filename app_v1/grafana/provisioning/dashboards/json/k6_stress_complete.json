@@ -1,0 +1,88 @@
+{
+  "id": null,
+  "uid": null,
+  "title": "K6 Stress Test - Complete",
+  "tags": ["k6", "load", "prometheus"],
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Virtual Users (k6_vus)",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "targets": [ { "expr": "k6_vus", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Requests per second (k6_http_reqs_total)",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "targets": [ { "expr": "sum(rate(k6_http_reqs_total[1m]))", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP Failures rate",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "targets": [ { "expr": "avg(k6_http_req_failed_rate)", "refId": "A" } ]
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Latency avg (s)",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 6 },
+      "targets": [ { "expr": "avg_over_time(k6_http_req_duration_avg[1m])", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency p95 (s)",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 6 },
+      "targets": [ { "expr": "max_over_time(k6_http_req_duration_p95[1m])", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency p99 (s)",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 6 },
+      "targets": [ { "expr": "max_over_time(k6_http_req_duration_p99[1m])", "refId": "A" } ]
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Backend RPS (FastAPI)",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 12 },
+      "targets": [ { "expr": "sum(rate(http_requests_total[1m]))", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "In-progress requests (FastAPI)",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 12 },
+      "targets": [ { "expr": "sum(http_requests_in_progress)", "refId": "A", "instant": true } ]
+    },
+
+    {
+      "type": "timeseries",
+      "title": "FastAPI latency avg (s)",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 18 },
+      "targets": [ { "expr": "rate(http_request_duration_seconds_sum[5m]) / rate(http_request_duration_seconds_count[5m])", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "FastAPI exceptions",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 18 },
+      "targets": [ { "expr": "sum(rate(http_exceptions_total[1m])) by (exception_type)", "refId": "A" } ]
+    },
+
+    {
+      "type": "timeseries",
+      "title": "DB commits/s",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 24 },
+      "targets": [ { "expr": "sum(rate(pg_stat_database_xact_commit[1m])) by (datname)", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "DB tuples inserted/s",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 24 },
+      "targets": [ { "expr": "sum(rate(pg_stat_database_tup_inserted[1m])) by (datname)", "refId": "A" } ]
+    }
+  ]
+}

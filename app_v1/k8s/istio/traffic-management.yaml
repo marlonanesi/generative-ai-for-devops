@@ -1,0 +1,70 @@
+# Gateway + VirtualService expondo frontend e roteando /api para backend
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: app-gateway
+  namespace: app
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: app-virtualservice
+  namespace: app
+spec:
+  hosts:
+    - frontend
+    - frontend.app.svc.cluster.local
+    # Hosts adicionais para facilitar acesso local via port-forward/NodePort sem precisar -H "Host: frontend"
+    - localhost
+    - 127.0.0.1
+  gateways:
+    - app-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /api
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: backend.app.svc.cluster.local
+            port:
+              number: 8000
+    - route:
+        - destination:
+            host: frontend.app.svc.cluster.local
+            port:
+              number: 8501
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: backend-dr
+  namespace: app
+spec:
+  host: backend.app.svc.cluster.local
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: frontend-dr
+  namespace: app
+spec:
+  host: frontend.app.svc.cluster.local
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN

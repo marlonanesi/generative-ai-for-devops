@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pydantic
+SQLAlchemy>=2.0
+psycopg[binary]
+python-dotenv
+streamlit
+httpx

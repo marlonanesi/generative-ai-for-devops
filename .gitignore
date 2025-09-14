@@ -1,0 +1,81 @@
+# === Python gerais ===
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual env
+.venv/
+venv/
+ENV/
+.envrc
+
+# Config / credenciais locais
+*.env
+.env
+.env.*
+!env.example
+!.env.example
+
+# Logs e dumps
+logs/
+*.log
+*.out
+*.err
+*.sqlite3
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.DS_Store
+Thumbs.db
+
+# Test / coverage
+.coverage
+htmlcov/
+.cache/
+pytest_cache/
+.tox/
+.mypy_cache/
+
+# Build / Dist
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Streamlit
+.streamlit/
+
+# Docker artefacts
+**/docker-data/
+**/tmp/
+
+# Node (caso adicione scripts js)
+node_modules/
+
+# k6 outputs
+k6-results*/
+*.json.summary
+
+# VSCode data
+.history/
+
+# Grafana / Prometheus runtime (se gerar localmente)
+/prometheus-data/
+/grafana-data/
+
+# OpenSearch data
+/opensearch-data/
+
+# Dataset temporários
+/tmp/
+
+# Ignorar material de aulas conforme solicitação
+/aulas/
+
+# Arquivos de sistema
+*.bak
+*.orig
+

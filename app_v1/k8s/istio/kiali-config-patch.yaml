@@ -1,0 +1,36 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kiali-prometheus-override
+  namespace: istio-system
+data:
+  config.yaml: |
+    external_services:
+      prometheus:
+        url: http://prometheus.istio-system:9090
+    istio_namespace: istio-system
+    server:
+      web_root: /kiali
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kiali
+  namespace: istio-system
+spec:
+  template:
+    spec:
+      containers:
+        - name: kiali
+          volumeMounts:
+            - name: kiali-prometheus-override
+              mountPath: /kiali-configuration/override
+              readOnly: true
+          env:
+            - name: KIALI_CONFIG_FILE
+              value: /kiali-configuration/override/config.yaml
+      volumes:
+        - name: kiali-prometheus-override
+          configMap:
+            name: kiali-prometheus-override

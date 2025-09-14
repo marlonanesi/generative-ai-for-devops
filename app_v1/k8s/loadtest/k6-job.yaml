@@ -1,0 +1,67 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k6-scripts
+  namespace: app
+  labels:
+    app: k6
+    component: loadtest
+    role: scripts
+data:
+  test_basico.js: |
+    import http from 'k6/http';
+    import { check, sleep } from 'k6';
+    export const options = { stages: [ { duration: '10s', target: 5 }, { duration: '30s', target: 5 }, { duration: '10s', target: 0 } ], thresholds: { http_req_duration: ['p(95)<500'], http_req_failed: ['rate<0.01'] } };
+    const API = __ENV.API_BASE || 'http://backend:8000';
+    export default function () { const res = http.get(`${API}/items?limit=10`); check(res, { 'status is 200': (r) => r.status === 200 }); sleep(1); }
+  test_crud.js: |
+    import http from 'k6/http';
+    import { check, sleep } from 'k6';
+    import { Trend } from 'k6/metrics';
+    export const options = { scenarios: { smoke: { executor: 'ramping-vus', startVUs: 0, stages: [ { duration: '30s', target: 30 }, { duration: '90s', target: 50 }, { duration: '30s', target: 0 } ], exec: 'listItems' }, crud_load: { executor: 'constant-vus', vus: 5, duration: '30s', exec: 'crudFlow' } }, thresholds: { http_req_failed: ['rate<0.02'], http_req_duration: ['p(95)<700'] } };
+    const API = __ENV.API_BASE || 'http://backend:8000';
+    const createTrend = new Trend('custom_create_duration');
+    export function listItems() { const res = http.get(`${API}/items?limit=20`); check(res, { 'list 200': r => r.status === 200 }); sleep(1); }
+    export function crudFlow() { const payload = JSON.stringify({ title: `item-${Date.now()}`, description: 'k6 created', status: 'pending' }); const headers = { 'Content-Type': 'application/json' }; const createRes = http.post(`${API}/items`, payload, { headers }); check(createRes, { 'create 201': r => r.status === 201 }); const id = (createRes.json() || {}).id; if (id) { const getRes = http.get(`${API}/items/${id}`); check(getRes, { 'get 200': r => r.status === 200 }); const updPayload = JSON.stringify({ description: 'updated by k6', status: 'done' }); const updRes = http.put(`${API}/items/${id}`, updPayload, { headers }); check(updRes, { 'update 200': r => r.status === 200 }); const delRes = http.del(`${API}/items/${id}`); check(delRes, { 'delete 204': r => r.status === 204 }); } sleep(0.5); }
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k6-smoke
+  namespace: app
+  labels:
+    app: k6
+    component: loadtest
+spec:
+  template:
+    metadata:
+      labels:
+        app: k6
+        component: loadtest
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: k6
+          image: grafana/k6:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: API_BASE
+              value: http://backend:8000
+            - name: K6_OUT
+              value: experimental-prometheus-rw
+            - name: K6_PROMETHEUS_RW_SERVER_URL
+              value: http://prometheus:9090/api/v1/write
+            - name: K6_PROMETHEUS_RW_TREND_STATS
+              value: p(95),p(99),avg,med,min,max
+          command: ["k6", "run", "/scripts/test_basico.js"]
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: k6-scripts
+  backoffLimit: 0
+# Alternate CRUD test example (apply separately if needed):
+# kubectl create job --from=cronjob/k6-smoke k6-crud -n app -- k6 run /scripts/test_crud.js

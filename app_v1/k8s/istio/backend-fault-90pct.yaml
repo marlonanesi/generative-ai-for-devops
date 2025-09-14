@@ -1,0 +1,23 @@
+# VirtualService para injetar falha em 90% das requisições ao backend
+# Aplicar: kubectl apply -f backend-fault-90pct.yaml -n app
+# Remover: kubectl delete -f backend-fault-90pct.yaml -n app
+# Observação: evite ter múltiplos VirtualServices diferentes para o mesmo host simultaneamente.
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: backend-fault-90pct
+  namespace: app
+spec:
+  hosts:
+    - backend.app.svc.cluster.local
+  http:
+    - fault:
+        abort:
+          httpStatus: 500
+          percentage:
+            value: 90
+      route:
+        - destination:
+            host: backend.app.svc.cluster.local
+            port:
+              number: 8000

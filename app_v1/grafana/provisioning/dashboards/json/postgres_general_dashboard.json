@@ -1,0 +1,44 @@
+{
+  "id": null,
+  "uid": null,
+  "title": "Database - Postgres Overview",
+  "tags": ["postgres", "prometheus"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "pg_up",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [ { "expr": "pg_up", "refId": "A", "instant": true } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "DB size (bytes) - appdb",
+      "gridPos": { "h": 8, "w": 12, "x": 6, "y": 0 },
+      "targets": [ { "expr": "pg_database_size_bytes{datname=\"appdb\"}", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Transactions committed/s",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [ { "expr": "sum(rate(pg_stat_database_xact_commit[1m])) by (datname)", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Tuples inserted/s",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [ { "expr": "sum(rate(pg_stat_database_tup_inserted[1m])) by (datname)", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Active connections",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [ { "expr": "sum(pg_stat_activity_count) by (datname)", "refId": "A" } ],
+      "description": "A métrica exata pode variar conforme a versão do exporter. Ajuste se necessário."
+    }
+  ]
+}

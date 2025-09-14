@@ -1,0 +1,61 @@
+{
+  "id": null,
+  "uid": null,
+  "title": "App - FastAPI Overview",
+  "tags": ["fastapi", "prometheus"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-15m", "to": "now" },
+  "timepicker": {},
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Requests rate by method/status",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "sum(rate(http_requests_total[1m])) by (method, status_code)", "refId": "A" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Average latency (s)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "rate(http_request_duration_seconds_sum[5m]) / rate(http_request_duration_seconds_count[5m])", "refId": "A" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "P95 latency (s)",
+      "description": "histogram_quantile sobre buckets de http_request_duration_seconds",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "refId": "A" }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Top paths by request rate",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "options": { "showHeader": true },
+      "targets": [
+        { "expr": "topk(5, sum(rate(http_requests_total[5m])) by (path))", "refId": "A", "instant": true }
+      ]
+    }
+  ]
+}

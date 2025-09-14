@@ -1,0 +1,43 @@
+# IstioOperator manifest - perfil demo customizado mínimo para aula
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: istio-demo-install
+  namespace: istio-system
+spec:
+  profile: demo
+  meshConfig:
+    enableTracing: true
+    accessLogFile: /dev/stdout
+    defaultConfig:
+      holdApplicationUntilProxyStarts: true
+  values:
+    global:
+      proxy:
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+    pilot:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+    gateways:
+      istio-ingressgateway:
+        type: NodePort # kind não tem LB; podemos usar port-forward ou NodePort
+        ports:
+          - name: status-port
+            port: 15021
+            targetPort: 15021
+          - name: http2
+            port: 80
+            targetPort: 8080
+            nodePort: 30080
+          - name: https
+            port: 443
+            targetPort: 8443
+            nodePort: 30443

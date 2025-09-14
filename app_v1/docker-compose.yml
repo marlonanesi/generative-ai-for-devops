@@ -1,0 +1,139 @@
+services:
+  db:
+    image: postgres:16
+    container_name: appv1-db
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: appdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: appv1-backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://app:app@db:5432/appdb
+      OPENSEARCH_ENABLED: "true"
+      OPENSEARCH_HOST: opensearch
+      OPENSEARCH_PORT: "9200"
+      OPENSEARCH_SCHEME: http
+      OPENSEARCH_USER: ""
+      OPENSEARCH_PASSWORD: ""
+      OPENSEARCH_INDEX: logs-app-v1
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      opensearch:
+        condition: service_started
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: appv1-frontend
+    environment:
+      API_HOST: backend
+      API_PORT: 8000
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./:/app
+    depends_on:
+      backend:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: appv1-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      # A flag experimental antiga (--enable-feature=remote-write-receiver) gerava 404.
+      # Versões recentes usam a flag estável abaixo para expor /api/v1/write
+      - "--web.enable-remote-write-receiver"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      backend:
+        condition: service_started
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: appv1-postgres-exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://app:app@db:5432/appdb?sslmode=disable
+    ports:
+      - "9187:9187"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: appv1-grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      prometheus:
+        condition: service_started
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+
+  opensearch:
+    image: opensearchproject/opensearch:2
+    container_name: appv1-opensearch
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=admin
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2
+    container_name: appv1-opensearch-dashboards
+    environment:
+      - OPENSEARCH_HOSTS=["http://opensearch:9200"]
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+    ports:
+      - "5601:5601"
+    depends_on:
+      opensearch:
+        condition: service_started
+
+  k6:
+    image: grafana/k6:latest
+    profiles: ["k6"]
+    depends_on:
+      backend:
+        condition: service_started
+      prometheus:
+        condition: service_started
+    environment:
+      - K6_OUT=experimental-prometheus-rw
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+      - K6_PROMETHEUS_RW_TREND_STATS=p(95),p(99),avg,med,min,max
+      - API_BASE=http://backend:8000
+    volumes:
+      - ./k6:/scripts
+    command: ["run", "/scripts/test_basico.js"]
+
+volumes:
+  pgdata:
